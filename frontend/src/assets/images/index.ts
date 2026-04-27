@@ -1,0 +1,1 @@
+export const dashboardImages = [] as const

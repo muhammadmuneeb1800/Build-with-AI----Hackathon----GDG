@@ -1,0 +1,1 @@
+export const dashboardSvgs = [] as const
