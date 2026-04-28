@@ -125,7 +125,7 @@ export const useNotificationHandler = () => {
   const { showSuccess, showError, showWarning, showInfo } = useNotification()
 
   const handleSuccess = useCallback(
-    (title: string, message: string, duration?: number) => {
+    (title: string, message: string) => {
       showSuccess(title, message)
     },
     [showSuccess]

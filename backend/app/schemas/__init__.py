@@ -7,6 +7,14 @@ from app.schemas.commitment import (
     RiskResponse,
     RiskSummary,
 )
+from app.schemas.integration import (
+    IntegrationConnectRequest,
+    IntegrationDisconnectRequest,
+    IntegrationRead,
+    IntegrationTestConnectionRequest,
+    IntegrationTestConnectionResponse,
+    IntegrationUpdateRequest,
+)
 
 __all__ = [
     "ActionRead",
@@ -16,4 +24,10 @@ __all__ = [
     "DailyBriefResponse",
     "RiskResponse",
     "RiskSummary",
+    "IntegrationConnectRequest",
+    "IntegrationDisconnectRequest",
+    "IntegrationRead",
+    "IntegrationTestConnectionRequest",
+    "IntegrationTestConnectionResponse",
+    "IntegrationUpdateRequest",
 ]
