@@ -49,6 +49,15 @@ cd backend
 pytest -q
 ```
 
+## Vercel deployment
+This repository is configured as a multi-service Vercel project through the root [vercel.json](vercel.json).
+
+- Frontend service: `frontend/` on `/`
+- Backend service: `backend/` on `/_backend`
+- The frontend uses `VITE_API_BASE_URL` when provided, and falls back to `/_backend` in production.
+
+Before deploying, confirm the backend service has the required database and API credentials configured in Vercel environment variables.
+
 ## Architecture
 See `project_summary.md` for an executive summary and diagrams (Mermaid). A `scripts/generate_summary_pdf.py` helper can convert the summary markdown into a simple PDF for presentations.
 
