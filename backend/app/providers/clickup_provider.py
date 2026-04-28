@@ -3,6 +3,7 @@
 import os
 from datetime import datetime, timezone
 from typing import Any, Optional
+import logging
 
 from app.providers.base_provider import (
     BaseProvider,
@@ -25,6 +26,7 @@ class ClickUpProvider(BaseProvider):
             "Authorization": self.clickup_api_key,
             "Content-Type": "application/json"
         }
+        self.logger = logging.getLogger(__name__)
     
     async def authenticate(self) -> bool:
         """Authenticate with ClickUp API."""
@@ -46,7 +48,7 @@ class ClickUpProvider(BaseProvider):
             self._authenticated = True
             return True
         except Exception as e:
-            print(f"ClickUp authentication failed: {str(e)}")
+            self.logger.exception("ClickUp authentication failed: %s", str(e))
             self._authenticated = False
             return False
     

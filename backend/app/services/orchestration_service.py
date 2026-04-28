@@ -7,6 +7,7 @@ and orchestrates the flow of information through the decision engine.
 
 from datetime import datetime, timezone
 from typing import Any, Optional
+import logging
 
 from sqlalchemy.orm import Session
 
@@ -46,6 +47,7 @@ class OrchestrationService:
         self.db = db
         self.providers: dict[ChannelType, BaseProvider] = {}
         self.notification_queue: list[Notification] = []
+        self.logger = logging.getLogger(__name__)
     
     def register_provider(
         self,
@@ -69,7 +71,7 @@ class OrchestrationService:
                 return True
             return False
         except Exception as e:
-            print(f"Failed to register provider for {channel}: {str(e)}")
+            self.logger.exception("Failed to register provider for %s", channel)
             return False
     
     def _create_provider(
@@ -157,7 +159,7 @@ class OrchestrationService:
                 }
             )
         except Exception as e:
-            print(f"Error processing message: {str(e)}")
+            self.logger.exception("Error processing message: %s", str(e))
             await self._send_notification(
                 notification_type=NotificationType.ERROR,
                 title="Message Processing Failed",
@@ -196,7 +198,7 @@ class OrchestrationService:
                     }
                 )
                 if response.success:
-                    print(f"✓ Synced to Notion: {commitment.task}")
+                    self.logger.info("Synced to Notion: %s", commitment.task)
             
             # Sync to ClickUp
             clickup_provider = self.providers.get(ChannelType.CLICKUP)
@@ -211,9 +213,9 @@ class OrchestrationService:
                     }
                 )
                 if response.success:
-                    print(f"✓ Synced to ClickUp: {commitment.task}")
+                    self.logger.info("Synced to ClickUp: %s", commitment.task)
         except Exception as e:
-            print(f"Error syncing commitment to task management: {str(e)}")
+            self.logger.exception("Error syncing commitment to task management: %s", str(e))
     
     async def _create_calendar_event(
         self,
@@ -239,9 +241,9 @@ class OrchestrationService:
                     }
                 )
                 if response.success:
-                    print(f"✓ Calendar event created: {commitment.task}")
+                    self.logger.info("Calendar event created: %s", commitment.task)
         except Exception as e:
-            print(f"Error creating calendar event: {str(e)}")
+            self.logger.exception("Error creating calendar event: %s", str(e))
     
     async def _send_notification(
         self,
@@ -272,9 +274,9 @@ class OrchestrationService:
             self.db.add(notification)
             self.db.commit()
             self.notification_queue.append(notification)
-            print(f"✓ Notification created: {title}")
+            self.logger.info("Notification created: %s", title)
         except Exception as e:
-            print(f"Error creating notification: {str(e)}")
+            self.logger.exception("Error creating notification: %s", str(e))
     
     async def get_unread_notifications(
         self,
@@ -289,7 +291,7 @@ class OrchestrationService:
             ).limit(limit).all()
             return notifications
         except Exception as e:
-            print(f"Error fetching notifications: {str(e)}")
+            self.logger.exception("Error fetching notifications: %s", str(e))
             return []
     
     async def mark_notification_read(self, notification_id: str) -> bool:
@@ -304,7 +306,7 @@ class OrchestrationService:
                 return True
             return False
         except Exception as e:
-            print(f"Error marking notification as read: {str(e)}")
+            self.logger.exception("Error marking notification as read: %s", str(e))
             return False
     
     async def sync_all_platforms(self) -> dict[str, bool]:
@@ -315,13 +317,13 @@ class OrchestrationService:
                 if await provider.validate_credentials():
                     response = await provider.sync_data("tasks")
                     results[channel.value] = response.success
-                    print(f"✓ Synced {channel.value}")
+                    self.logger.info("Synced %s", channel.value)
                 else:
                     results[channel.value] = False
-                    print(f"✗ Failed to validate credentials for {channel.value}")
+                    self.logger.warning("Failed to validate credentials for %s", channel.value)
             except Exception as e:
                 results[channel.value] = False
-                print(f"✗ Error syncing {channel.value}: {str(e)}")
+                self.logger.exception("Error syncing %s: %s", channel.value, str(e))
         return results
     
     async def validate_all_providers(self) -> dict[str, bool]:
@@ -333,5 +335,5 @@ class OrchestrationService:
                 results[channel.value] = is_valid
             except Exception as e:
                 results[channel.value] = False
-                print(f"Validation error for {channel.value}: {str(e)}")
+                self.logger.exception("Validation error for %s: %s", channel.value, str(e))
         return results

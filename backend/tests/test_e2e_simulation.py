@@ -28,6 +28,9 @@ from app.providers import (
 )
 from app.models.notification import Notification
 from app.schemas.notification import NotificationType
+import logging
+
+logger = logging.getLogger("tests")
 
 
 # ============================================================================
@@ -103,7 +106,7 @@ async def test_e2e_whatsapp_message_to_calendar_and_notification():
     
     assert reply_response.success is True
     assert "message_id" in reply_response.data
-    print(f"✓ WhatsApp reply sent: {reply_response.data.get('message_id')}")
+    logger.info("WhatsApp reply sent: %s", reply_response.data.get('message_id'))
     
     # ========================================================================
     # Step 4: Sync commitment to Notion
@@ -121,7 +124,7 @@ async def test_e2e_whatsapp_message_to_calendar_and_notification():
     assert notion_response.success is True
     assert "page_id" in notion_response.data
     notion_page_id = notion_response.data.get("page_id")
-    print(f"✓ Task synced to Notion: {notion_page_id}")
+    logger.info("Task synced to Notion: %s", notion_page_id)
     
     # ========================================================================
     # Step 5: Sync commitment to ClickUp
@@ -139,7 +142,7 @@ async def test_e2e_whatsapp_message_to_calendar_and_notification():
     assert clickup_response.success is True
     assert "task_id" in clickup_response.data
     clickup_task_id = clickup_response.data.get("task_id")
-    print(f"✓ Task synced to ClickUp: {clickup_task_id}")
+    logger.info("Task synced to ClickUp: %s", clickup_task_id)
     
     # ========================================================================
     # Step 6: Create calendar event
@@ -157,7 +160,7 @@ async def test_e2e_whatsapp_message_to_calendar_and_notification():
     assert calendar_response.success is True
     assert "event_id" in calendar_response.data
     event_id = calendar_response.data.get("event_id")
-    print(f"✓ Calendar event created: {event_id}")
+    logger.info("Calendar event created: %s", event_id)
     
     # ========================================================================
     # Step 7: Verify notification would be sent to UI
@@ -172,7 +175,7 @@ async def test_e2e_whatsapp_message_to_calendar_and_notification():
     
     assert notification_data["type"] == "success"
     assert "Commitment Captured" in notification_data["title"]
-    print(f"✓ Notification ready for UI: {notification_data['title']}")
+    logger.info("Notification ready for UI: %s", notification_data['title'])
     
     # ========================================================================
     # Step 8: Verify error handling - test updating task status
@@ -183,7 +186,7 @@ async def test_e2e_whatsapp_message_to_calendar_and_notification():
         status="In Progress"
     )
     assert notion_update.success is True
-    print(f"✓ Updated Notion task status to: In Progress")
+    logger.info("Updated Notion task status to: In Progress")
     
     # Update ClickUp task to "In progress"
     clickup_update = await clickup_provider.update_task_status(
@@ -191,14 +194,14 @@ async def test_e2e_whatsapp_message_to_calendar_and_notification():
         status="in progress"
     )
     assert clickup_update.success is True
-    print(f"✓ Updated ClickUp task status to: in progress")
+    logger.info("Updated ClickUp task status to: in progress")
     
     # ========================================================================
     # Step 9: Verify rate limiting handling
     # ========================================================================
     rate_limit_result = await whatsapp_provider.handle_rate_limit()
     assert isinstance(rate_limit_result, bool)
-    print(f"✓ Rate limit handling successful")
+    logger.info("Rate limit handling successful")
     
     # ========================================================================
     # Step 10: Verify credential validation across all providers
@@ -212,7 +215,7 @@ async def test_e2e_whatsapp_message_to_calendar_and_notification():
     assert notion_valid is True
     assert clickup_valid is True
     assert calendar_valid is True
-    print(f"✓ All provider credentials validated successfully")
+    logger.info("All provider credentials validated successfully")
     
     # ========================================================================
     # Summary
@@ -311,13 +314,13 @@ async def test_e2e_sync_across_all_platforms():
     for name, provider in providers.items():
         result = await provider.authenticate()
         assert result is True
-        print(f"✓ {name} authenticated")
+        logger.info("%s authenticated", name)
     
     # Validate all credentials
     for name, provider in providers.items():
         is_valid = await provider.validate_credentials()
         assert is_valid is True
-        print(f"✓ {name} credentials validated")
+        logger.info("%s credentials validated", name)
 
 
 # ============================================================================
@@ -337,7 +340,7 @@ async def test_notification_types():
     
     for notif_type in notification_types:
         assert notif_type.value in ["success", "error", "warning", "info"]
-        print(f"✓ {notif_type.value} notification type available")
+        logger.info("%s notification type available", notif_type.value)
 
 
 # ============================================================================
@@ -360,12 +363,12 @@ async def test_provider_integration_message_chain():
         recipient_id="+9876543210",
         content="Test message"
     )
-    assert response1.success is True
-    message_id = response1.data.get("message_id")
     
     # In a real scenario, this would trigger the orchestration
     # which would sync to other platforms
-    print(f"✓ Message chain started with ID: {message_id}")
+    assert response1.success is True
+    message_id = response1.data.get("message_id")
+    logger.info("Message chain started with ID: %s", message_id)
 
 
 @pytest.mark.asyncio
@@ -399,4 +402,4 @@ async def test_provider_fallback_on_failure():
         )
     
     assert response.success is True
-    print("✓ Fallback mechanism works correctly")
+    logger.info("Fallback mechanism works correctly")

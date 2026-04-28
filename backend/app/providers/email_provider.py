@@ -3,6 +3,7 @@
 import os
 from datetime import datetime, timezone
 from typing import Any, Optional
+import logging
 
 from app.providers.base_provider import (
     BaseProvider,
@@ -22,6 +23,7 @@ class EmailProvider(BaseProvider):
         self.gmail_api_key = config.get("gmail_api_key") or os.getenv("GMAIL_API_KEY")
         self.user_email = config.get("user_email") or os.getenv("USER_EMAIL")
         self.service = None
+        self.logger = logging.getLogger(__name__)
     
     async def authenticate(self) -> bool:
         """Authenticate with Gmail API."""
@@ -37,7 +39,7 @@ class EmailProvider(BaseProvider):
             self._authenticated = True
             return True
         except Exception as e:
-            print(f"Email authentication failed: {str(e)}")
+            self.logger.exception("Email authentication failed: %s", str(e))
             self._authenticated = False
             return False
     
@@ -64,7 +66,7 @@ class EmailProvider(BaseProvider):
             
             pass
         except Exception as e:
-            print(f"Error receiving emails: {str(e)}")
+            self.logger.exception("Error receiving emails: %s", str(e))
         
         return messages
     
