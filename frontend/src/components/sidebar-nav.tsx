@@ -36,6 +36,8 @@ import { NAV_ITEMS } from '../constants'
 const ICONS: Record<string, string> = {
   dashboard: '◌',
   add: '+',
+  integrations: '⊞',
+  profile: '◍',
 }
 
 export function SidebarNav() {

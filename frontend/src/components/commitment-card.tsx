@@ -70,6 +70,7 @@ export function CommitmentCard({
   onToggleStatus,
 }: CommitmentCardProps) {
   const isDone = commitment.status === "done";
+  const actionText = commitment.actions[0]?.action_text;
 
   return (
     <article
@@ -103,7 +104,7 @@ export function CommitmentCard({
       </div>
 
       {/* Action hint */}
-      {commitment.action_text && (
+      {actionText && (
         <div
           className="
           text-[12px] text-[var(--text-secondary)] leading-relaxed
@@ -111,7 +112,7 @@ export function CommitmentCard({
           bg-[var(--bg-base)] border-l-2 border-[var(--accent-soft)]
         "
         >
-          {commitment.action_text}
+          {actionText}
         </div>
       )}
 

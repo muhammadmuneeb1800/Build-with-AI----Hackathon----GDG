@@ -1,3 +1,5 @@
 export * from './add-commitment-page'
 export * from './dashboard-page'
+export * from './integrations-page'
 export * from './not-found-page'
+export * from './profile-page'
