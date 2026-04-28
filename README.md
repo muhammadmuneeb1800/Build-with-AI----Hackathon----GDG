@@ -55,8 +55,9 @@ This repository is configured as a multi-service Vercel project through the root
 - Frontend service: `frontend/` on `/`
 - Backend service: `backend/` on `/_backend`
 - The frontend uses `VITE_API_BASE_URL` when provided, and falls back to `/_backend` in production.
+- The backend now falls back to a writable SQLite file at `/tmp/autopilot_ai.db` when `DATABASE_URL` is not set, which prevents 500s on Vercel but does not persist data between deployments or cold starts.
 
-Before deploying, confirm the backend service has the required database and API credentials configured in Vercel environment variables.
+Before deploying, confirm the backend service has the required database and API credentials configured in Vercel environment variables. For real persistence, set `DATABASE_URL` to a managed Postgres instance such as Neon or Supabase.
 
 ## Architecture
 See `project_summary.md` for an executive summary and diagrams (Mermaid). A `scripts/generate_summary_pdf.py` helper can convert the summary markdown into a simple PDF for presentations.
