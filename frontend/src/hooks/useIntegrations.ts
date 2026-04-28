@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import type { Integration, IntegrationConfig, IntegrationStatus, IntegrationType, UseIntegrationsReturn } from '../types/types'
 import integrationConfigs from '../config/integrations'
-import { useNotification } from '../providers/NotificationProvider'
+import { useNotification } from './useNotification'
 import { axiosInstance } from '../utils/axiosInstance'
 
 const INTEGRATIONS_QUERY_KEY = ['integrations']
@@ -32,6 +32,19 @@ function toUIModel(remoteIntegrations: Integration[]): Integration[] {
       updatedAt: new Date(0).toISOString(),
     }
   })
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  if (typeof error === 'object' && error !== null && 'response' in error) {
+    const response = error as { response?: { data?: { detail?: string; error?: string } } }
+    return response.response?.data?.detail || response.response?.data?.error || fallback
+  }
+
+  return fallback
 }
 
 export const useIntegrations = (): UseIntegrationsReturn => {
@@ -72,8 +85,8 @@ export const useIntegrations = (): UseIntegrationsReturn => {
         showInfo('Testing connection', `Validating ${integrationConfigs[type].displayName} credentials...`)
         const response = await axiosInstance.post('/integrations/test-connection', { type, credentials })
         return response.data?.success === true
-      } catch (err: any) {
-        const message = err?.response?.data?.detail || err?.response?.data?.error || 'Connection test failed'
+      } catch (error: unknown) {
+        const message = getErrorMessage(error, 'Connection test failed')
         showError('Connection failed', message)
         return false
       }
@@ -92,8 +105,8 @@ export const useIntegrations = (): UseIntegrationsReturn => {
         await axiosInstance.post('/integrations/connect', { type, credentials })
         await refreshIntegrations()
         showSuccess('Connected', `${integrationConfigs[type].displayName} is now connected.`)
-      } catch (err: any) {
-        const message = err?.response?.data?.detail || 'Failed to connect integration'
+      } catch (error: unknown) {
+        const message = getErrorMessage(error, 'Failed to connect integration')
         showError('Connection error', message)
       }
     },
@@ -106,8 +119,8 @@ export const useIntegrations = (): UseIntegrationsReturn => {
         await axiosInstance.post('/integrations/disconnect', { type })
         await refreshIntegrations()
         showSuccess('Disconnected', `${integrationConfigs[type].displayName} was disconnected.`)
-      } catch (err: any) {
-        const message = err?.response?.data?.detail || 'Failed to disconnect integration'
+      } catch (error: unknown) {
+        const message = getErrorMessage(error, 'Failed to disconnect integration')
         showError('Disconnect error', message)
       }
     },
@@ -120,8 +133,8 @@ export const useIntegrations = (): UseIntegrationsReturn => {
         await axiosInstance.patch(`/integrations/${type}`, { config })
         await refreshIntegrations()
         showSuccess('Saved', `${integrationConfigs[type].displayName} settings were updated.`)
-      } catch (err: any) {
-        const message = err?.response?.data?.detail || 'Failed to update integration'
+      } catch (error: unknown) {
+        const message = getErrorMessage(error, 'Failed to update integration')
         showError('Update error', message)
       }
     },
@@ -134,8 +147,8 @@ export const useIntegrations = (): UseIntegrationsReturn => {
         await axiosInstance.post(`/integrations/${type}/sync`, {})
         await refreshIntegrations()
         showSuccess('Sync started', `${integrationConfigs[type].displayName} sync has started.`)
-      } catch (err: any) {
-        const message = err?.response?.data?.detail || 'Sync failed'
+      } catch (error: unknown) {
+        const message = getErrorMessage(error, 'Sync failed')
         showError('Sync error', message)
       }
     },
