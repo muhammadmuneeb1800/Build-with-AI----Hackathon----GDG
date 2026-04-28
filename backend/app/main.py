@@ -29,5 +29,9 @@ def on_startup() -> None:
 def health_check() -> dict[str, str]:
     return {"status": "ok"}
 
+@app.get("/")
+def root():
+    return {"message": "Founder Decision Engine API running 🚀"}
+
 
 app.include_router(api_router)

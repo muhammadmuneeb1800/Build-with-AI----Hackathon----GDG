@@ -1,9 +1,11 @@
 from __future__ import annotations
+from datetime import datetime, timezone
 
 import json
 import os
 from datetime import datetime, timezone
 from typing import Any
+
 
 try:
     from google import genai as google_genai
@@ -79,7 +81,8 @@ def analyze_risk(commitments: list[dict[str, Any]]) -> dict[str, Any]:
                 deadline = datetime.fromisoformat(deadline.replace("Z", "+00:00"))
             except ValueError:
                 deadline = None
-
+        if deadline and deadline.tzinfo is None:
+             deadline = deadline.replace(tzinfo=timezone.utc)
         status = str(commitment.get("status") or "pending")
         priority = str(commitment.get("priority") or "medium")
         task = str(commitment.get("task") or commitment.get("content") or "Untitled commitment")
