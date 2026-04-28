@@ -3,9 +3,10 @@
  * Manages fetching and updating notifications from the backend
  */
 
-import { useEffect, useState, useCallback } from 'react'
+import { useCallback } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { useNotification } from '../providers/NotificationProvider'
+import { useNotification } from './useNotification'
 import { axiosInstance } from '../utils/axiosInstance'
 
 export interface Notification {
@@ -20,90 +21,91 @@ export interface Notification {
   related_commitment_id?: string
 }
 
+const NOTIFICATIONS_QUERY_KEY = ['notifications']
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  if (typeof error === 'object' && error !== null && 'response' in error) {
+    const response = error as { response?: { data?: { detail?: string } } }
+    return response.response?.data?.detail || fallback
+  }
+
+  return fallback
+}
+
 export const useNotifications = (pollInterval: number = 5000) => {
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
   const { showError } = useNotification()
 
-  // Fetch notifications from backend
-  const fetchNotifications = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const response = await axiosInstance.get('/notifications', {
-        params: { unread_only: true, limit: 10 }
+  const notificationsQuery = useQuery({
+    queryKey: NOTIFICATIONS_QUERY_KEY,
+    queryFn: async () => {
+      const response = await axiosInstance.get<Notification[]>('/notifications', {
+        params: { unread_only: true, limit: 10 },
       })
-      setNotifications(response.data)
-    } catch (err: any) {
-      const message = err.response?.data?.detail || 'Failed to fetch notifications'
-      setError(message)
-      showError('Error', message)
-    } finally {
-      setLoading(false)
-    }
-  }, [showError])
+      return response.data
+    },
+    refetchInterval: pollInterval,
+  })
 
-  // Mark notification as read
+  const notifications = notificationsQuery.data ?? []
+
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
       await axiosInstance.patch(`/notifications/${notificationId}`, {
-        is_read: true
+        is_read: true,
       })
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n.id === notificationId ? { ...n, is_read: true } : n
-        )
+      queryClient.setQueryData<Notification[]>(NOTIFICATIONS_QUERY_KEY, (previous) =>
+        (previous ?? []).map((notification) =>
+          notification.id === notificationId ? { ...notification, is_read: true } : notification,
+        ),
       )
-    } catch (err: any) {
-      const message = err.response?.data?.detail || 'Failed to mark notification as read'
+    } catch (error: unknown) {
+      const message = getErrorMessage(error, 'Failed to mark notification as read')
       showError('Error', message)
     }
-  }, [showError])
+  }, [queryClient, showError])
 
-  // Mark all as read
   const markAllAsRead = useCallback(async () => {
     try {
       await axiosInstance.post('/notifications/mark-all-read')
-      setNotifications((prev) =>
-        prev.map((n) => ({ ...n, is_read: true }))
+      queryClient.setQueryData<Notification[]>(NOTIFICATIONS_QUERY_KEY, (previous) =>
+        (previous ?? []).map((notification) => ({ ...notification, is_read: true })),
       )
-    } catch (err: any) {
-      const message = err.response?.data?.detail || 'Failed to mark all as read'
+    } catch (error: unknown) {
+      const message = getErrorMessage(error, 'Failed to mark all as read')
       showError('Error', message)
     }
-  }, [showError])
+  }, [queryClient, showError])
 
-  // Delete notification
   const deleteNotification = useCallback(async (notificationId: string) => {
     try {
       await axiosInstance.delete(`/notifications/${notificationId}`)
-      setNotifications((prev) =>
-        prev.filter((n) => n.id !== notificationId)
+      queryClient.setQueryData<Notification[]>(NOTIFICATIONS_QUERY_KEY, (previous) =>
+        (previous ?? []).filter((notification) => notification.id !== notificationId),
       )
-    } catch (err: any) {
-      const message = err.response?.data?.detail || 'Failed to delete notification'
+    } catch (error: unknown) {
+      const message = getErrorMessage(error, 'Failed to delete notification')
       showError('Error', message)
     }
-  }, [showError])
+  }, [queryClient, showError])
 
-  // Poll for new notifications
-  useEffect(() => {
-    fetchNotifications()
-
-    const interval = setInterval(fetchNotifications, pollInterval)
-    return () => clearInterval(interval)
-  }, [fetchNotifications, pollInterval])
+  const fetchNotifications = useCallback(async () => {
+    await notificationsQuery.refetch()
+  }, [notificationsQuery])
 
   return {
     notifications,
-    loading,
-    error,
+    loading: notificationsQuery.isLoading || notificationsQuery.isFetching,
+    error: notificationsQuery.error instanceof Error ? notificationsQuery.error.message : null,
     fetchNotifications,
     markAsRead,
     markAllAsRead,
     deleteNotification,
-    unreadCount: notifications.filter((n) => !n.is_read).length
+    unreadCount: notifications.filter((notification) => !notification.is_read).length,
   }
 }
 
@@ -132,14 +134,15 @@ export const useNotificationHandler = () => {
   )
 
   const handleError = useCallback(
-    (title: string, error: any) => {
+    (title: string, error: unknown) => {
       let message = 'An unknown error occurred'
       
       if (typeof error === 'string') {
         message = error
-      } else if (error?.response?.data?.detail) {
-        message = error.response.data.detail
-      } else if (error?.message) {
+      } else if (typeof error === 'object' && error !== null && 'response' in error) {
+        const response = error as { response?: { data?: { detail?: string } } }
+        message = response.response?.data?.detail || message
+      } else if (error instanceof Error) {
         message = error.message
       }
 

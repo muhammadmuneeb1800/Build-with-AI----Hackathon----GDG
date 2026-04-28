@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { fetchCommitments, fetchDailyBrief, fetchRisks, type Commitment, type DailyBriefResponse, type RiskResponse } from '../api'
 
@@ -13,49 +14,38 @@ interface DashboardDataState {
 }
 
 export function useDashboardData(autoRefresh = true): DashboardDataState {
-  const [commitments, setCommitments] = useState<Commitment[]>([])
-  const [risks, setRisks] = useState<RiskResponse | null>(null)
-  const [brief, setBrief] = useState<DailyBriefResponse | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null)
+  const queryClient = useQueryClient()
 
-  const refresh = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-
-    try {
+  const dashboardQuery = useQuery({
+    queryKey: ['dashboard-data'],
+    queryFn: async () => {
       const [commitmentsResponse, risksResponse, briefResponse] = await Promise.all([
         fetchCommitments(),
         fetchRisks(),
         fetchDailyBrief(),
       ])
 
-      setCommitments(commitmentsResponse)
-      setRisks(risksResponse)
-      setBrief(briefResponse)
-      setLastUpdated(new Date().toISOString())
-    } catch (refreshError) {
-      const message = refreshError instanceof Error ? refreshError.message : 'Unable to load dashboard data.'
-      setError(message)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+      return {
+        commitments: commitmentsResponse,
+        risks: risksResponse,
+        brief: briefResponse,
+      }
+    },
+    refetchInterval: autoRefresh ? 30000 : false,
+  })
 
-  useEffect(() => {
-    void refresh()
+  const refresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['dashboard-data'] })
+    await dashboardQuery.refetch()
+  }, [dashboardQuery, queryClient])
 
-    if (!autoRefresh) {
-      return undefined
-    }
-
-    const timer = window.setInterval(() => {
-      void refresh()
-    }, 30000)
-
-    return () => window.clearInterval(timer)
-  }, [autoRefresh, refresh])
-
-  return { commitments, risks, brief, loading, error, lastUpdated, refresh }
+  return {
+    commitments: dashboardQuery.data?.commitments ?? [],
+    risks: dashboardQuery.data?.risks ?? null,
+    brief: dashboardQuery.data?.brief ?? null,
+    loading: dashboardQuery.isLoading || dashboardQuery.isFetching,
+    error: dashboardQuery.error instanceof Error ? dashboardQuery.error.message : null,
+    lastUpdated: dashboardQuery.dataUpdatedAt > 0 ? new Date(dashboardQuery.dataUpdatedAt).toISOString() : null,
+    refresh,
+  }
 }

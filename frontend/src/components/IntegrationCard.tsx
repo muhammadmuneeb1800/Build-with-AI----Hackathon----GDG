@@ -21,6 +21,11 @@ export const IntegrationCard: React.FC<IntegrationCardProps> = ({
     setShowConfirmDisconnect(false)
   }
 
+  const accountName =
+    integration.credentials && typeof integration.credentials.accountName === 'string'
+      ? integration.credentials.accountName
+      : null
+
   const formatLastSynced = (date?: string) => {
     if (!date) return 'Never synced'
     const d = new Date(date)
@@ -75,10 +80,10 @@ export const IntegrationCard: React.FC<IntegrationCardProps> = ({
 
       {integration.isConnected && (
         <div className="rounded-md p-3 space-y-2 bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
-          {integration.credentials?.accountName && (
+          {accountName && (
             <div className="text-sm">
               <span className="text-[var(--text-muted)]">Account:</span>{' '}
-              <span className="font-medium">{integration.credentials.accountName}</span>
+              <span className="font-medium">{accountName}</span>
             </div>
           )}
           {integration.lastSynced && (

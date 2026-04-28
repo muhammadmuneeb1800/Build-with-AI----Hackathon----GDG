@@ -128,7 +128,7 @@ export const useIntegrations = (): UseIntegrationsReturn => {
   )
 
   const updateIntegration = useCallback(
-    async (type: IntegrationType, config: Record<string, any>) => {
+    async (type: IntegrationType, config: Record<string, unknown>) => {
       try {
         await axiosInstance.patch(`/integrations/${type}`, { config })
         await refreshIntegrations()

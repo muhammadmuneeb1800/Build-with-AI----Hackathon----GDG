@@ -5,14 +5,12 @@
  * All API responses, errors, and system events trigger notifications.
  */
 
-import React, { createContext, useContext, useCallback} from 'react'
+import React, { useCallback } from 'react'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import type { NotificationCenterProps, NotificationConfig, NotificationContextType } from '../types/types'
 
-
-
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined)
+import { NotificationContext } from '../context/notification-context'
 
 /**
  * ToastProvider Component
@@ -90,24 +88,6 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       />
     </NotificationContext.Provider>
   )
-}
-
-/**
- * useNotification Hook
- * Use this hook anywhere in your component tree to access notification methods
- * 
- * Example:
- * const { showSuccess, showError } = useNotification()
- * 
- * showSuccess("Success!", "Commitment created successfully")
- * showError("Error!", "Failed to create commitment")
- */
-export const useNotification = (): NotificationContextType => {
-  const context = useContext(NotificationContext)
-  if (context === undefined) {
-    throw new Error('useNotification must be used within a ToastProvider')
-  }
-  return context
 }
 
 /**
