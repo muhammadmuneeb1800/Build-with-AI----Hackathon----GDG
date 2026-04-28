@@ -3,7 +3,7 @@
  * Modal for connecting integrations and entering credentials
  */
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import type { ConnectionModalProps } from '../types/types'
 import { validateCredentials } from '../config/integrations'
 
@@ -15,17 +15,9 @@ export const ConnectionModal: React.FC<ConnectionModalProps> = ({
   onCancel,
   initialCredentials,
 }) => {
-  const [credentials, setCredentials] = useState<Record<string, string>>(
-    initialCredentials || {}
-  )
+  const [credentials, setCredentials] = useState<Record<string, string>>(initialCredentials || {})
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [touched, setTouched] = useState<Record<string, boolean>>({})
-
-  useEffect(() => {
-    if (initialCredentials) {
-      setCredentials(initialCredentials)
-    }
-  }, [initialCredentials])
 
   const handleChange = (fieldId: string, value: string) => {
     setCredentials((prev) => ({

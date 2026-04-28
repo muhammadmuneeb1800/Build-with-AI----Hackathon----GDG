@@ -65,11 +65,11 @@ export interface Integration {
   type: IntegrationType
   displayName: string
   isConnected: boolean
-  credentials?: Record<string, any>
+  credentials?: Record<string, unknown>
   lastSynced?: string
   createdAt: string
   updatedAt: string
-  config?: Record<string, any>
+  config?: Record<string, unknown>
   syncFrequency?: 'manual' | 'hourly' | 'daily' | 'weekly'
   autoSync?: boolean
 }
@@ -139,7 +139,7 @@ export interface UseIntegrationsReturn {
   connectIntegration: (type: IntegrationType, credentials: Record<string, string>) => Promise<void>
   disconnectIntegration: (type: IntegrationType) => Promise<void>
   testConnection: (type: IntegrationType, credentials: Record<string, string>) => Promise<boolean>
-  updateIntegration: (type: IntegrationType, config: Record<string, any>) => Promise<void>
+  updateIntegration: (type: IntegrationType, config: Record<string, unknown>) => Promise<void>
   syncNow: (type: IntegrationType) => Promise<void>
   fetchIntegrations: () => Promise<void>
 }

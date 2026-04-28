@@ -88,6 +88,7 @@ export function IntegrationsPage() {
 
       {activeConfig ? (
         <ConnectionModal
+          key={activeType ?? 'inactive'}
           integration={activeConfig}
           isOpen={Boolean(activeType)}
           isLoading={testingType === activeType}
