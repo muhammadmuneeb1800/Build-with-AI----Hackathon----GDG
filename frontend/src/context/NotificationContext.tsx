@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useCallback, useMemo } from 'react';
-import { ToastContainer, toast, ToastOptions } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
+import type { ToastOptions } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { NotificationConfig, NotificationContextType } from '../types/types';
+import type { NotificationConfig, NotificationContextType } from '../types/types';
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 

@@ -16,6 +16,18 @@ export const NAV_ITEMS = [
 		href: appRoutes.add,
 		icon: 'add',
 	},
+	{
+		label: 'Integrations',
+		description: 'Connect and manage external tools',
+		href: appRoutes.integrations,
+		icon: 'integrations',
+	},
+	{
+		label: 'Profile',
+		description: 'AI preferences and notifications',
+		href: appRoutes.profile,
+		icon: 'profile',
+	},
 ] as const
 
 export const PRIORITY_COPY = {
