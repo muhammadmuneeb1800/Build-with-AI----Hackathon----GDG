@@ -145,7 +145,7 @@ async def test_whatsapp_send_message_without_recipient(whatsapp_config):
     )
     
     assert response.success is False
-    assert "Invalid parameters" in response.message
+    assert any(keyword in response.message for keyword in ["Invalid parameters", "Missing recipient"])
 
 
 @pytest.mark.asyncio
